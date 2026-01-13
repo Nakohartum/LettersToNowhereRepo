@@ -1,13 +1,14 @@
 using _Root.Shared.Ports.Input;
 using _Root.Shared.Ports.MovementFeature;
+using Zenject;
 
 namespace _Root.MovementFeature.Application
 {
     public class MovementSystem
     {
-        private MovementUsecase _movementUsecase;
-        private IMovePort _movePort;
-        private IInputPort _inputPort;
+        private readonly MovementUsecase _movementUsecase;
+        private readonly IMovePort _movePort;
+        private readonly IInputPort _inputPort;
 
         public MovementSystem(
             MovementUsecase movementUsecase,
@@ -16,17 +17,19 @@ namespace _Root.MovementFeature.Application
         )
         {
             _movementUsecase = movementUsecase;
+            
             _movePort = movePort;
             _inputPort = inputPort;
         }
 
         public void OnTick()
         {
-            // TODO
             _movementUsecase.Handle();
-
-            _movePort.Move(_inputPort.MoveInput);
+            
             _movePort.Rotate(_inputPort.MoveInput);
         }
+        
+        public void OnFixedTick()
+            => _movePort.Move(_inputPort.MoveInput);
     }
 }

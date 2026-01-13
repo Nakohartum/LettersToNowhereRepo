@@ -13,19 +13,17 @@ namespace _Root.MovementFeature.Domain
         public float MaxSpeed { get; private set; }
         public float Acceleration { get; private set; }
         public float Deceleration { get; private set; }
-        public float RotateSmooth { get; private set; }
 
         public MovementLock MovementLock { get; private set; }
 
         public bool CanMoveVertical => MovementLock is MovementLock.AllDirection or MovementLock.Vertical;
         public bool CanMoveHorizontal => MovementLock is MovementLock.AllDirection or MovementLock.Horizontal;
 
-        public MovementModel(float maxSpeed, float acceleration, float deceleration, float rotateSmooth, MovementLock movementLock = MovementLock.AllDirection)
+        public MovementModel(float maxSpeed, float acceleration, float deceleration, MovementLock movementLock = MovementLock.AllDirection)
         {
             MaxSpeed = maxSpeed;
             Acceleration = acceleration;
             Deceleration = deceleration;
-            RotateSmooth = rotateSmooth;
 
             MovementLock = movementLock;
         }

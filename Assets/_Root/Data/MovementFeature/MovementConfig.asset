@@ -13,7 +13,6 @@ MonoBehaviour:
   m_Name: MovementConfig
   m_EditorClassIdentifier: Assembly-CSharp::_Root.MovementFeature.Infrastructure.MovementConfig
   MaxSpeed: 2
-  Acceleration: 2
+  Acceleration: 5
   Decelration: 5
-  RotateSmooth: 8
   MovementLockSelection: 0

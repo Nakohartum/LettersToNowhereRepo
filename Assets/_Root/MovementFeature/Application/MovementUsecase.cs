@@ -5,9 +5,9 @@ namespace _Root.MovementFeature.Application
 {
     public class MovementUsecase
     {
-        private MovementState _movementState;
-        private MovementModel _movementModel;
-        private IInputPort _inputPort;
+        private readonly MovementState _movementState;
+        private readonly MovementModel _movementModel;
+        private readonly IInputPort _inputPort;
 
         public MovementUsecase(MovementState movementState, MovementModel movementModel, IInputPort inputPort)
         {
@@ -21,14 +21,16 @@ namespace _Root.MovementFeature.Application
 
         public void Handle()
         {
-            HandleMovingState();
             HandleMovementSpeed();
+            HandleMovingState();
         }
 
-        private void HandleMovingState()
-            => _movementState.IsMoving = _inputPort.MoveInput.sqrMagnitude > 0.1f;
-
         private void HandleMovementSpeed()
-            => _movementState.SpeedFactor = _movementState.IsMoving ? _movementModel.Acceleration : _movementModel.Deceleration;
+            => _movementState.SpeedFactor = _movementState.IsMoving
+            ? _movementModel.Acceleration
+            : _movementModel.Deceleration;
+        
+        private void HandleMovingState()
+            => _movementState.IsMoving = _movementState.HasSignificantInput(_inputPort.MoveInput.sqrMagnitude);
     }
 }

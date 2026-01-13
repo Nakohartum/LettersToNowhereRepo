@@ -1,4 +1,3 @@
-using System;
 using _Root.MovementFeature.Application;
 using _Root.MovementFeature.Domain;
 using _Root.Shared.Ports.MovementFeature;
@@ -8,62 +7,81 @@ using Zenject;
 
 namespace _Root.MovementFeature.Infrastructure
 {
-    public class MovementAdapter : MonoBehaviour, IMovePort, ITickable
+    [RequireComponent(typeof(Rigidbody2D)), RequireComponent(typeof(CapsuleCollider2D))]
+    public class MovementAdapter : MonoBehaviour, IMovePort, ITickable, IFixedTickable
     {
+        [SerializeField] private SpriteRenderer _playerSprite;
+        [SerializeField] private Rigidbody2D _rigidbody;
+
         private MovementState _movementState;
         private MovementModel _movementModel;
         private MovementSystem _movementSystem;
 
         [Inject]
-        public void Construct(MovementState movementState, MovementModel movementModel, MovementSystem movementSystem)
+        public void Construct(MovementState movementState, MovementSystem movementSystem)
         {
             _movementState = movementState;
-            _movementModel = movementModel;
             _movementSystem = movementSystem;
+
+            InitializeRigidbody();
+        }
+
+        private void InitializeRigidbody()
+        {
+            _rigidbody ??= GetComponent<Rigidbody2D>();
+            
+            _rigidbody.gravityScale = 0f; // zero gravity
+            _rigidbody.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+            _rigidbody.sleepMode = RigidbodySleepMode2D.NeverSleep; // REVIEW - Оставлять или не
+            _rigidbody.interpolation = RigidbodyInterpolation2D.Extrapolate;
+            _rigidbody.constraints = RigidbodyConstraints2D.FreezeRotation;
         }
 
         #region Handling
 
         public void Move(Vector2 direction)
         {
-            // TODO
+            // NOTE: позаимствовал
+            Vector2 dir = _movementState.IsMoving ? direction.normalized : Vector2.zero;
 
-            if (_movementModel.MovementLock == MovementLock.NoDirection) return;
+            float maxSpeed = Mathf.Max(0f, _movementState.MaxSpeed); // NOTE: оставил
 
-            if (!_movementModel.CanMoveVertical) direction.y = 0;
-            if (!_movementModel.CanMoveHorizontal) direction.x = 0;
+            Vector2 desired = dir * maxSpeed;
+            Vector2 current = _rigidbody.linearVelocity; // Unity6 кажется
+            Vector2 delta   = desired - current;
 
-            Vector2 targetVelocity = direction.normalized * _movementState.MaxSpeed;
+            float ratePerSec = Mathf.Max(0f, _movementState.SpeedFactor);
+            float maxDeltaStep = ratePerSec * Time.fixedDeltaTime;
 
-            _movementState.CurrentVelocity = Vector2.MoveTowards(
-                _movementState.CurrentVelocity,
-                targetVelocity,
-                _movementState.SpeedFactor * Time.deltaTime
-            );
+            Vector2 appliedDelta = Vector2.ClampMagnitude(delta, maxDeltaStep);
 
-            transform.position += (Vector3)(_movementState.CurrentVelocity * Time.deltaTime);
+            if (_movementState.HasSignificantInput(appliedDelta.sqrMagnitude))
+            {
+                appliedDelta *= _rigidbody.mass;
+                _rigidbody.AddForce(appliedDelta, ForceMode2D.Impulse);
+            }
         }
-        
-        float _lastDirection = 1f; // NOTE: если 0 то ваш персонаж станет лепешкой в 2Д (схлопнется)
 
-        // REVIEW: Есть прикол, что можно денсить (нажимая право-лево), есть вариант добавить заддержку с использованием времени.
-        
+        const float RotTolerance = 0.01f;
+
         public void Rotate(Vector2 direction)
         {
-            if (_lastDirection != direction.x && direction.x != 0)
-                _lastDirection = Mathf.Sign(direction.x); // -1..1
+            // Можно в системуу перенести
+            if (!_movementState.IsMoving)
+                return;
             
-            if (!Mathf.Approximately(_lastDirection, transform.localScale.x)) // NOTE: не ебу как, но дрожания исчезают, прошлый опыт
-            {
-                Vector3 newScale = transform.localScale;
-                newScale.x = _lastDirection;
+            float dot = Vector2.Dot(direction.normalized, Vector2.right);
 
-                transform.localScale = Vector3.Lerp(transform.localScale, newScale, _movementModel.RotateSmooth * Time.deltaTime);
-            }
+            if (Mathf.Abs(dot) < RotTolerance)
+                return;
+            
+            _playerSprite.flipX = dot < 0f;
         }
 
         #endregion
 
         public void Tick() => _movementSystem.OnTick();
+
+        public void FixedTick() => _movementSystem.OnFixedTick();
     }
 }

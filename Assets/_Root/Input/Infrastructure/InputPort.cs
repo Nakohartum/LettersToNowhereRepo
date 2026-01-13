@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 
 namespace _Root.Input.Infrastructure
 {
-    public class InputPort : IInputPort
+    public class InputPort : IInputPort, IDisposable
     {
         private InputActions _playerInput;
         private InputActions.MotionActions _playerKeys;
@@ -26,6 +26,13 @@ namespace _Root.Input.Infrastructure
             HookInteractionEvents();
         }
         
+        public void Dispose()
+        {
+            UnHookInteractionEvents();
+
+            _playerInput.Disable();
+        }
+
         private void InitializeInputActions()
         {
             _playerInput = new();
@@ -42,10 +49,16 @@ namespace _Root.Input.Infrastructure
             _playerInteractKeys.ObjectInteraction.performed += OnInteractionPerfomed;
         }
 
+        private void UnHookInteractionEvents()
+        {
+            _playerInteractKeys.ObjectInteraction.performed -= OnInteractionPerfomed;
+        }
+
         private void OnInteractionPerfomed(InputAction.CallbackContext ctx)
         {
             OnInteractionPressed?.Invoke();
             Debug.Log("Interaction performed");
         }
+
     }
 }

@@ -6,8 +6,6 @@ namespace _Root.Input.Infrastructure
     public class InputInstaller : MonoInstaller
     {
         public override void InstallBindings()
-        {
-            Container.Bind<IInputPort>().To<InputPort>().AsSingle().NonLazy();
-        }
+            => Container.Bind<IInputPort>().To<InputPort>().AsSingle().NonLazy();
     }
 }

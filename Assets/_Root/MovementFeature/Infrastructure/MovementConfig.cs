@@ -19,13 +19,10 @@ namespace _Root.MovementFeature.Infrastructure
 
         [Header("Other")]
 
-        [Tooltip("Smooth level of player turning to move direction")]
-        [field: Range(2f, 10f)] public float RotateSmooth;
-
         [Tooltip("Selects direction player can move")]
         public MovementLock MovementLockSelection;
 
         public MovementModel ToModel()
-            => new(MaxSpeed, Acceleration, Decelration, RotateSmooth, MovementLockSelection);
+            => new(MaxSpeed, Acceleration, Decelration, MovementLockSelection);
     }
 }
